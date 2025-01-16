@@ -12,7 +12,7 @@ The **Password Generator with Strength Checker and Encrypted Storage** is a Pyth
 ## Installation
 1. Clone the repository:
     ```bash
-    git clone https://github.com/yourusername/Password-Generator-With-Encryption.git
+    git clone https://github.com/Mishraji99/Password-Generator
     ```
 2. Install dependencies:
     ```bash
