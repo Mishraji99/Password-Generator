@@ -1,7 +1,9 @@
 import random
 import string
-
-from cryptography.fernet import Fernet;
+from cryptography.fernet import Fernet
+import os
+import tkinter as tk
+from tkinter import messagebox
 
 # Generate a key for encryption (do this once and save the key securely)
 def generate_key():
@@ -11,6 +13,9 @@ def generate_key():
 
 # Load the encryption key
 def load_key():
+    if not os.path.exists("key.key"):
+        raise FileNotFoundError("The encryption key file 'key.key' is missing. Please generate a key first.")
+    
     with open("key.key", "rb") as key_file:
         return key_file.read()
 
@@ -39,37 +44,73 @@ def generate_password(length=14):
     password = ''.join(random.choice(characters) for _ in range(length))
     return password
 
-# Save password securely
+# Save password securely (encrypt and store it)
 def save_password(password):
-    key = load_key()
-    fernet = Fernet(key)
-    encrypted_password = fernet.encrypt(password.encode())
+    try:
+        key = load_key()
+        fernet = Fernet(key)
+        encrypted_password = fernet.encrypt(password.encode())
 
-    with open("passwords.txt", "ab") as file:
-        file.write(encrypted_password + b'\n')
+        with open("passwords.txt", "ab") as file:
+            file.write(encrypted_password + b'\n')
+        messagebox.showinfo("Success", "Password saved securely!")
+    except FileNotFoundError:
+        messagebox.showerror("Error", "Encryption key not found. Please generate the encryption key first.")
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred while saving the password: {e}")
 
-# Main function to generate, check, and save password
+# Function to handle password generation and strength checking
+def generate_and_check_password():
+    password = generate_password()  # Generate password
+    strength = check_password_strength(password)  # Check password strength
+    
+    # Display generated password and its strength in the UI
+    password_label.config(text=password)
+    strength_label.config(text=strength)
+    
+    # Optionally save the password to file
+    save_password(password)
+
+# Setting up the UI with Tkinter
+def setup_ui():
+    # Create the main window
+    root = tk.Tk()
+    root.title("Password Generator Tool")
+    root.geometry("400x300")
+    root.configure(bg="black")
+    
+    # Add a title label
+    title_label = tk.Label(root, text="Generate Password", font=("Arial", 16), bg="lightgray", fg="black")
+    title_label.pack(pady=20)
+    
+    # Add a button to generate password
+    generate_button = tk.Button(root, text="Click", font=("Arial", 12), bg="blue", fg="white", command=generate_and_check_password)
+    generate_button.pack(pady=10)
+    
+    # Add a label to display the password
+    global password_label
+    password_label = tk.Label(root, text="Password Will be Generated Here", font=("Arial", 12), bg="black", fg="white", width=40, height=2)
+    password_label.pack(pady=10)
+    
+    # Add a label to display the password strength
+    global strength_label
+    strength_label = tk.Label(root, text="", font=("Arial", 12), bg="black", fg="white")
+    strength_label.pack(pady=5)
+    
+    # Start the Tkinter main loop
+    root.mainloop()
+
+# Main function to ensure key exists and start the UI
 def main():
     # Ensure the key exists
     try:
         load_key()
     except FileNotFoundError:
+        messagebox.showwarning("Key Missing", "Encryption key not found. Generating a new key...")
         generate_key()
-
-    # Generate a password
-    password = generate_password()
-    print("Generated Password:", password)
-
-    # Check strength
-    strength = check_password_strength(password)
-    print("Password Strength:", strength)
-
-    # Save the password securely
-    save_password(password)
-    print("Password saved securely!")
+    
+    # Setup and run the UI
+    setup_ui()
 
 if __name__ == "__main__":
     main()
-
-# Encryption key file (generated once)key.key
-# File where encrypted passwords are stored passwords.text
